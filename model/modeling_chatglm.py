@@ -955,15 +955,15 @@ class ChatGLMForConditionalGeneration(ChatGLMPreTrainedModel):
             # Shift so that tokens < n predict n
             shift_logits = lm_logits[..., :-1, :].contiguous().view(-1, self.config.padded_vocab_size)
             shift_labels = labels[..., 1:].contiguous().view(-1)
-            mask = shift_labels != -100
-            shift_logits = shift_logits[mask]
-            shift_labels = shift_labels[mask]
             # Flatten the tokens
-            # loss_fct = CrossEntropyLoss(ignore_index=-100)
-            # loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
-            shift_probs = F.softmax(shift_logits, -1) + self.config.log_prob_eps
-            shift_onehots = F.one_hot(shift_labels, self.config.padded_vocab_size)
-            loss = (-shift_onehots * torch.log(shift_probs)).sum(-1).mean()
+            loss_fct = CrossEntropyLoss(ignore_index=-100)
+            loss = loss_fct(shift_logits, shift_labels)
+            # mask = shift_labels != -100
+            # shift_logits = shift_logits[mask]
+            # shift_labels = shift_labels[mask]
+            # shift_probs = F.softmax(shift_logits, -1) + self.config.log_prob_eps
+            # shift_onehots = F.one_hot(shift_labels, self.config.padded_vocab_size)
+            # loss = (-shift_onehots * torch.log(shift_probs)).sum(-1).mean()
 
             lm_logits = lm_logits.to(hidden_states.dtype)
             loss = loss.to(hidden_states.dtype)
